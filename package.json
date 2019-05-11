@@ -1,0 +1,9 @@
+{
+  "name": "pdic-conv",
+  "version": "0.5.0",
+  "main": "pdic-conv.js",
+  "types": "pdic-conv.d.ts",
+  "dependencies": {
+    "buffer": "^5.2.1"
+  }
+}
