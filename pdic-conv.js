@@ -7,133 +7,11 @@
  */
 
 /*
- * 使い方:
- *   node pdic-conv ***.dic [出力先ファイル] [options...]
- *
- * 出力先ファイル: 省略した場合、入力ファイルの拡張子を出力形式に合わせて変更したものを使用します
- *
- * 形式(options):
- *   -csv  : CSV形式 (デフォルト)
- *   -text : テキスト形式,
- *   -1line: 1行テキスト形式
- *
- * 詳細設定(options):
- *   -keyword: 指定するとCSV型式でキーワードの項目を出力する
- *
- * 文字コード(options):
- *   -unicode: UTF-16LE(BOM有り) PDICやTWOCなど (デフォルト)
- *   -utf8   : UTF-8(BOM無し) 幻日辞典など
- */
-
-/*
  * 未対応: 圧縮, 暗号化, ファイルリンクや埋め込みファイルやOLEオブジェクト
  */
 
 const fs = require("fs");
 const bocu1 = require("./bocu1");
-
-function main() {
-	let dicFile, outFile, format = 0, encoding = 0, keyword = false;
-	if (process.argv[2]) {
-		dicFile = process.argv[2];
-		process.argv.slice(3).forEach(function (arg) {
-			if (arg.substr(0, 1) == "-") {
-				switch (arg) {
-				case "-csv":
-					format = 0;
-					break;
-				case "-text":
-					format = 1;
-					break;
-				case "-1line":
-					format = 2;
-					break;
-				case "-unicode":
-					encoding = 0;
-					break;
-				case "-utf8":
-					encoding = 1;
-					break;
-				case "-keyword":
-					keyword = true;
-					break;
-				}
-			}
-		});
-		if (process.argv[3] && process.argv[3].substr(0, 1) != "-") {
-			outFile = process.argv[3];
-		} else {
-			let match;
-			if ((match = dicFile.match(/^(.*)\.[^\\\.]*$/)) != null) {
-				outFile = match[1] + [".csv", ".txt", ".txt"][format];
-			} else {
-				outFile = dicFile + [".csv", ".txt", ".txt"][format];
-			}
-		}
-	} else {
-		console.log("node pdic-conv dicFile [outputFile]");
-		process.exit();
-	}
-
-	let ret = "";
-
-	try {
-		if (format == 0) { // CSV
-			if (keyword) {
-				ret += "keyword,";
-			}
-			ret += "word,trans,exp,level,memory,modify,pron";
-
-			readPDIC(dicFile, function (entry) {
-				ret += "\r\n";
-				if (keyword) {
-					ret += `"${entry.keyword.replace(/"/g, '""')}",`;
-				}
-				ret += `"${entry.word.replace(/"/g, '""')}",`;
-				ret += `"${entry.trans.replace(/"/g, '""')}",`;
-				ret += `"${(entry.exp || "").replace(/"/g, '""')}",`;
-				ret += (entry.level || 0) + ",";
-				ret += (entry.memory ? 1 : 0) + ",";
-				ret += (entry.modify ? 1 : 0) + ",";
-				ret += `"${(entry.pron || "").replace(/"/g, '""')}"`;
-			});
-		} else if (format == 2) { // 1 line text
-			ret = "";
-			let firstLine = true;
-			readPDIC(dicFile, function (entry) {
-				if (firstLine) {
-					ret += "\r\n";
-					firstLine = false;
-				}
-				ret += entry.word + " /// " + entry.trans.replace(/\r?\n/g, " \\ ");
-				if (entry.exp) {
-					ret += " / " + entry.exp.replace(/\r?\n/g, " \\ ");
-				}
-			});
-		} else { // text
-			ret = "";
-			readPDIC(dicFile, function (entry) {
-				ret += entry.word + "\r\n" + entry.trans;
-				if (entry.exp) {
-					ret += " / " + entry.exp;
-				}
-				ret += "\r\n";
-			});
-		}
-	} catch(e) {
-		if (e instanceof FormatError) {
-			console.log(e.message);
-		} else {
-			throw e;
-		}
-	}
-
-	if (encoding == 0) { // Unicode
-		fs.writeFileSync(outFile, "\ufeff" + ret, "utf16le");
-	} else { // UTF-8
-		fs.writeFileSync(outFile, ret, "utf8");
-	}
-}
 
 class FormatError {
 	constructor(message) {
@@ -368,5 +246,3 @@ function sliceBufferUntilNull(buffer, start) {
 	}
 	return {buffer: buffer.slice(start, end), next: end + 1};
 }
-
-main();
