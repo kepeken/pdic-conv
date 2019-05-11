@@ -1,16 +1,18 @@
 /*
- * pdic-conv.js v0.4
+ * pdic-conv.js v0.5.0
  *
  * Copyright (c) 2015-2018 na2co3
  * Released under the MIT License, see:
  * http://opensource.org/licenses/mit-license.php
+ * 
+ * Modified by kepeken
  */
 
 /*
  * 未対応: 圧縮, 暗号化, ファイルリンクや埋め込みファイルやOLEオブジェクト
  */
 
-const fs = require("fs");
+const { Buffer } = require("buffer");
 const bocu1 = require("./bocu1");
 
 class FormatError {
@@ -20,13 +22,13 @@ class FormatError {
 }
 
 class SeekableFile {
-	constructor(fd) {
-		this.fd = fd;
+	constructor(arrayBuffer) {
+		this.buffer = Buffer.from(arrayBuffer);
 		this.position = 0;
 	}
 
 	read(buffer, length) {
-		fs.readSync(this.fd, buffer, 0, length, this.position);
+		this.buffer.copy(buffer, 0, this.position, this.position + length);
 		this.position += length;
 	}
 
@@ -40,10 +42,10 @@ class SeekableFile {
 }
 
 /*
- * DICファイルを開いて読み込む
- * file      : DICファイルのパス
- * writeEntry: コールバック関数。第1引数にエントリーオブジェクトが渡される
- *             DICファイル内のデータ順にそって各エントリーごとに呼ばれる
+ * DICファイルを読み込む
+ * arrayBuffer: DICファイルのデータバッファ
+ * writeEntry : コールバック関数。第1引数にエントリーオブジェクトが渡される
+ *              DICファイル内のデータ順にそって各エントリーごとに呼ばれる
  *
  *   エントリーオブジェクト: {
  *     keyword : 見出語の検索キー
@@ -57,8 +59,8 @@ class SeekableFile {
  *     linkdata: ファイルリンク又は埋め込みファイル (未対応)
  *    }
  */
-function readPDIC(file, writeEntry) {
-	let dic = new SeekableFile(fs.openSync(file, "r"));
+export function readPDIC(arrayBuffer, writeEntry) {
+	let dic = new SeekableFile(arrayBuffer);
 	let headerBuf = new Buffer(256);
 	dic.read(headerBuf, 256);
 
