@@ -1,7 +1,7 @@
 /*
  * pdic-conv.js v0.5.0
  *
- * Copyright (c) 2015-2018 na2co3
+ * Copyright (c) 2015-2019 na2co3
  * Released under the MIT License, see:
  * http://opensource.org/licenses/mit-license.php
  * 
@@ -61,7 +61,7 @@ class SeekableFile {
  */
 export function readPDIC(arrayBuffer, writeEntry) {
 	let dic = new SeekableFile(arrayBuffer);
-	let headerBuf = new Buffer(256);
+	let headerBuf = Buffer.alloc(256);
 	dic.read(headerBuf, 256);
 
 	// --- header ---
@@ -69,13 +69,13 @@ export function readPDIC(arrayBuffer, writeEntry) {
 	// header.headername = headerBuf.toString("ascii", 0, 100);
 	header.version = headerBuf.readInt16LE(0x8c);
 	if (header.version >> 8 != 6) {
-		throw new FormatError("Error: 非対応のバージョンです。バージョン: 0x" + header.version.toString(16));
+		throw new FormatError("Error: 辞書ファイルが正しくないか、非対応のバージョンです。バージョン: 0x" + header.version.toString(16));
 	}
 	header.index_block = headerBuf.readUInt16LE(0x94);
 	// header.nword = headerBuf.readUInt32LE(0xa0);
 	header.dictype = headerBuf.readUInt8(0xa5); // 0x01:バイナリを圧縮, 0x08:BOCU-1, 0x40:暗号化
 	if (header.dictype & 64) {
-		throw new FormatError("Error: 暗号化された辞書には対応していません");
+		throw new FormatError("Error: 辞書が暗号化されています。");
 	}
 	// header.olenumber = headerBuf.readInt32LE(0xa8);
 	header.index_blkbit = headerBuf.readUInt8(0xb6); //0:16bit, 1:32bit
@@ -89,8 +89,8 @@ export function readPDIC(arrayBuffer, writeEntry) {
 	// --- index ---
 	let indexOffset = 1024 + header.extheader;
 	let index = new Array(header.nindex2);
-	let blockIDBuf = new Buffer(4);
-	let indexWordBuf = new Buffer(1);
+	let blockIDBuf = Buffer.alloc(4);
+	let indexWordBuf = Buffer.alloc(1);
 	dic.seek(indexOffset);
 	for (let index_id = 0; index_id < header.nindex2; index_id++) {
 		if (!header.index_blkbit) { // 16bit index
@@ -107,10 +107,10 @@ export function readPDIC(arrayBuffer, writeEntry) {
 
 	// --- data block ---
 	let dataOffset = indexOffset + (header.index_block * 1024);
-	let blockSpanBuf = new Buffer(2);
-	let fieldLengthBuf = new Buffer(4);
-	let omitLengthBuf = new Buffer(1);
-	let wordFlagBuf = new Buffer(1);
+	let blockSpanBuf = Buffer.alloc(2);
+	let fieldLengthBuf = Buffer.alloc(4);
+	let omitLengthBuf = Buffer.alloc(1);
+	let wordFlagBuf = Buffer.alloc(1);
 	let tmp;
 	for (let index_id = 0; index_id < header.nindex2; index_id++) {
 		dic.seek(dataOffset + (index[index_id] * 1024));
@@ -122,7 +122,7 @@ export function readPDIC(arrayBuffer, writeEntry) {
 		let fieldLengthBit = !!(blockSpan & 0x8000); // 0:16bit, 1:32bit
 		// blockSpan &= 0x7fff;
 
-		let prevRawWord = new Buffer(0);
+		let prevRawWord = Buffer.alloc(0);
 		while (true) {
 			let entry = {};
 
@@ -151,7 +151,7 @@ export function readPDIC(arrayBuffer, writeEntry) {
 			entry.modify = !!(wordFlag & 0x40);
 			entry.level = wordFlag & 0x0f;
 
-			let fieldBuf = new Buffer(fieldLength);
+			let fieldBuf = Buffer.alloc(fieldLength);
 			dic.read(fieldBuf, fieldLength);
 
 			tmp = sliceBufferUntilNull(fieldBuf, 0);
