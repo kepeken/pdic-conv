@@ -1,4 +1,4 @@
-export function readPDIC(arrayBuffer: ArrayBuffer, writeEntry: (entry: Entry) => void): void;
+export function readPDIC(arrayBuffer: ArrayBuffer): Entry[];
 
 interface Entry {
   keyword: string;

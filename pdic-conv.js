@@ -44,8 +44,7 @@ class SeekableFile {
 /*
  * DICファイルを読み込む
  * arrayBuffer: DICファイルのデータバッファ
- * writeEntry : コールバック関数。第1引数にエントリーオブジェクトが渡される
- *              DICファイル内のデータ順にそって各エントリーごとに呼ばれる
+ * 返り値     : エントリーオブジェクトの配列
  *
  *   エントリーオブジェクト: {
  *     keyword : 見出語の検索キー
@@ -59,7 +58,8 @@ class SeekableFile {
  *     linkdata: ファイルリンク又は埋め込みファイル (未対応)
  *    }
  */
-export function readPDIC(arrayBuffer, writeEntry) {
+export function readPDIC(arrayBuffer) {
+	let entries = [];
 	let dic = new SeekableFile(arrayBuffer);
 	let headerBuf = Buffer.alloc(256);
 	dic.read(headerBuf, 256);
@@ -234,9 +234,10 @@ export function readPDIC(arrayBuffer, writeEntry) {
 					}
 				}
 			}
-			writeEntry(entry);
+			entries.push(entry);
 		}
 	}
+	return entries;
 }
 
 function sliceBufferUntilNull(buffer, start) {
