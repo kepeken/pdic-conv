@@ -1,5 +1,5 @@
 /*
- * pdic-conv.js v0.5.0
+ * pdic-conv.js v0.6.0
  *
  * Copyright (c) 2015-2019 na2co3
  * Released under the MIT License, see:

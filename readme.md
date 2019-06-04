@@ -1,4 +1,4 @@
-# pdic-conv v0.5.0
+# pdic-conv v0.6.0
 
 JavaScript で PDIC/Unicode の辞書形式を扱うためのライブラリです。
 
